@@ -1,0 +1,137 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif, system-ui;
+  /* Fixed: background-color does not support gradients */
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f4f8 100%);
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 0.75rem;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+textarea:focus {
+  border-color: #5b9bd5;
+  outline: none;
+}
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    background-color 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-render {
+  background: linear-gradient(135deg, #5b9bd5, #3a7bd5);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(58, 123, 213, 0.3);
+}
+
+.btn-render:hover {
+  box-shadow: 0 4px 8px rgba(58, 123, 213, 0.5);
+}
+
+.btn-upload {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+}
+
+.btn-upload:hover {
+  box-shadow: 0 4px 8px rgba(230, 126, 34, 0.5);
+}
+
+.btn-stickers {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+.btn-stickers:hover {
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.5);
+}
+
+#file-input {
+  display: none;
+}
+
+.file--name {
+  font-size: 0.9rem;
+  color: #555;
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+#output {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#output svg {
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 600px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn {
+    text-align: center;
+  }
+}

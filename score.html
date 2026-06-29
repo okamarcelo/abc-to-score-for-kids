@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Educação Musical</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.4/dist/abcjs-basic-min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif, system-ui;
+        background-color: linear-gradient(135deg, #f8f9ff 0%, #e8f4f8 100%);
+        padding: 1rem;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        color: #333;
+        margin-bottom: 1rem;
+      }
+
+      .input-area {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 0.75rem;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        resize: vertical;
+        transition: border-color 0.2s;
+      }
+
+      textarea:focus {
+        border-color: #5b9bd5;
+        outline: none;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.6rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          background-color 0.2s;
+      }
+
+      .btn:active {
+        transform: scale(0.97);
+      }
+
+      .btn-render {
+        background: linear-gradient(135deg, #5b9bd5, #3a7bd5);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(58, 123, 213, 0.3);
+      }
+
+      .btn-render:hover {
+        box-shadow: 0 4px 8px rgba(58, 123, 213, 0.5);
+      }
+
+      .btn-upload {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+      }
+
+      .btn-upload:hover {
+        box-shadow: 0 4px 8px rgba(230, 126, 34, 0.5);
+      }
+
+      .btn-stickers {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+      }
+
+      .btn-stickers:hover {
+        box-shadow: 0 4px 8px rgba(46, 204, 113, 0.5);
+      }
+
+      #file-input {
+        display: none;
+      }
+
+      .file--name {
+        font-size: 0.9rem;
+        color: #555;
+        margin-left: 0.5rem;
+        font-style: italic;
+      }
+
+      #output {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #fff;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #output svg {
+        width: 100%;
+        height: auto;
+      }
+
+      @media (max-width: 600px) {
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .btn {
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Educação Musical</h1>
+      <div class="input-area">
+        <textarea id="abc-input" placeholder="Digite a notação ABC aqui...">
+X:1
+T:Exemplo
+M:4/4
+L:1/4
+K:C
+C4|C2 D2|E F G A|B/2 c/2 d/2 e|c2 z2|</textarea
+        >
+        <div class="controls">
+          <button class="btn btn-render" id="render-btn">Renderizar Partitura</button>
+          <button class="btn btn-upload" id="upload-btn">Carregar Arquivo ABC</button>
+          <button class="btn btn-stickers" id="stickers-btn">Adicionar Stickers</button>
+          <input type="file" id="file-input" accept=".abc,.md,.txt" />
+          <span class="file--name" id="file-name"></span>
+        </div>
+      </div>
+      <div id="output"></div>
+    </div>
+
+    <script>
+      const NOTE_COLORS = {
+          C: 0, D:30, E:60, F:120, G:190, A:240, B:280,
+      };
+
+      const FLAT_TO_SHARP = {
+          'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+      };
+
+      function noteToHSL(noteName, octave) {
+          const base = noteName.charAt(0).toUpperCase();
+          const hue = NOTE_COLORS[base];
+          if (hue === undefined) return null;
+          const diff = octave - 4;
+          let lightness = 50 + diff * 20;
+          lightness = Math.max(10, Math.min(90, lightness));
+          return `hsl(${hue}, 85%, ${lightness}%)`;
+      }
+
+      function flatToSharp(note) {
+          for (const [flat, sharp] of Object.entries(FLAT_TO_SHARP)) {
+              if (note.includes(flat)) {
+                  return note.replace(flat, sharp);
+              }
+          }
+          return note;
+      }
+
+      function abcPitchToNote(hslStr) {
+          const pitches = absElem.abcelem?.pitches;
+          if (!pitches || pitches.length === 0) return null;
+          const p = pitches[0];
+          const pitch = p.pitch;
+          const noteNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+          let idx = ((pitch % 7) + 7) % 7;
+          let octave = Math.floor(pitch / 7) + 4;
+          let name = noteNames[idx];
+          if (p.accidental === 'flat'){
+              name = flatToSharp(name + 'b').replace('b', '');
+              if (name.includes('#')) name = name.charAt(0);
+          }
+          return { name, octave, accidental: p.accidental || ''};
+      }
+
+      function hslIsBright(hslStr) {
+          const m = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+          if (!m) return false;
+          const h = +m[1], l = +m[3];
+          return l >= 60 || (l >= 40 && h <= 160 && l >= 40);
+      }
+
+      function limitBarsPerLine(abc, maxbars) {
+          const lines = abc.split('\n');
+          const out = [];
+          let inMusic = false;
+          for (const line of lines) {
+              if (!inMusic) {
+                  out.push(line);
+                  if(/^K:/i.test(line.trim())) inMusic = true;
+                  continue;
+              }
+              if (/^\w\s*:/.test(line.trim())) {
+                  out.push(line);
+                  continue;
+              }
+              let barCount = 0, current = '';
+              for (const ch of line) {
+                  current += ch;
+                  if (ch === '|') {
+                      barCount++;
+                      if (barCount % maxbars === 0) {
+                          out.push(current.trim());
+                          current = '';
+                      }
+                  }
+              }
+              if (current.trim()) out.push(current.trim());
+          }
+          return out.join('\n');
+      }
+
+      function postProcessSVG(svgEl, tuneObj){
+          if (!tuneObj || !tuneObj[0]) return;
+          const tune = tuneObj[0];
+          const engraver = tune.engraver;
+          if (!engraver || !engraver.staffgroups) return;
+
+          const noteElems = [];
+          for (const sg of engraver.staffgroups) {
+              if (!sg.voices) continue;
+              for (const voice of sg.voices) {
+                  if (!voice.children) continue;
+                  for (const elem of voice.children) {
+                      if (elem.abcelem?.pitches?.length > 0) {
+                          noteElems.push(elem);
+                      }
+                  }
+              }
+          }
+
+          const noteheads = svgEl.querySelectorAll('path.abcjs-notehead');
+          const NS = 'http://www.w3.org/2000/svg';
+
+          noteheads.forEach((headPath, i) => {
+              if (i >= noteElems.length) return;
+              const info = abcPitchToNote(noteElems[i]);
+              if (!info) return;
+              const color = noteToHSL(info.name, info.octave);
+              if (!color) return;
+              const dur = noteElems[i].abcelem.duration;
+              const isHollow = dur >= 0.5;
+
+              if (isHollow) {
+                  const d = headPath.getAttribute('d');
+                  const firstZ = d.indexOf('z');
+                  if (firstZ > 0 ) headPath.setAttribute('d', d.substring(0, firstZ) +1);
+              }
+              headPath.setAttribute('fill', isHollow(color) ? '#fff' : color);
+              headPath.setAttribute('stroke', isHollow ? color : '#333');
+              headPath.setAttribute('stroke-width', isHollow ? '1.5' : '0.5');
+
+              const bbox = headPath.getBBox();
+              const cx = bbox.x + bbox.width / 2;
+              const cy = bbox.y + bbox.height / 2;
+              const fontSize = Math.min(bbox.width * 0.7, bbox.height * 1.1);
+
+              const text = document.createElementNS(NS, 'text');
+              text.setAttribute('x', cx);
+              text.setAttribute('y', cy);
+              text.setAttribute('text-anchor', 'middle');
+              text.setAttribute('dominant-baseline', 'central');
+              text.setAttribute('font-size', fontSize + 'px');
+              text.setAttribute('fill', isHollow ? '#333' : (hslIsBright(color) ? '#333' : '#fff'));
+              text.setAttribute('font-family', "'Nunito', 'Baloo 2', 'Varela Round', 'Quicksand', 'Segoe UI', sans-serif");
+              text.setAttribute('pointer-events', 'none');
+              if (isHollow) {
+                  text.setAttribute('stroke', '#fff');
+                  text.setAttribute('stroke-width', (fontSize * 0.15) + 'px');
+                  text.setAttribute('paint-order', 'stroke');
+              }
+              text.textContent = info.name;
+              headPath.parentNode.appendChild(text);
+          });
+      }
+
+      function render() {
+          const input = document.getElementById('abc-input').value.trim();
+          const outputDiv = document.getElementById('output');
+          if (!input) {
+              outputDiv.innerHTML = '<p style="color: red;">Por favor, insira a notação ABC para renderizar a partitura.</p>';
+              return;
+          }
+          outputDiv.innerHTML = '';
+
+          const processed = limitBarsPerLine(input, 2);
+
+          const tuneObj = ABCJS.renderAbc(outputDiv, processed, {
+              responsive: 'resize',
+              staffwidth: 350,
+              scale: 3,
+              paddingtop: 20,
+              paddingbottom: 20,
+          });
+
+          const svgEl = outputDiv.querySelector('svg');
+          if (svgEl) postProcessSVG(svgEl, tuneObj);
+
+      }
+
+      function printStickers() {
+          const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+          const notesLong = ['Dó', 'Ré', 'Mi', 'Fá', 'Sol', 'Lá', 'Si'];
+          const stickers = [];
+          for (let oct = 2; oct <= 5; oct++) {
+              for (const n of notes) {
+                  stickers.push ({name: n, nameLong: notesLong[notes.indexOf(n)], octave: oct, color: noteToHSL(n, oct)});
+              }
+          }
+          stickers.push({name: 'C', nameLong: 'Dó', octave: 6, color: noteToHSL('C', 6)});
+
+          let cells = '';
+          for (const s of stickers) {
+              const dark = hslIsBright(s.color);
+              const tc = dark ? '#333' : '#fff';
+              cells += `<div class="s" style="background:${s.color}; color:${tc};"><span class="n">${s.name}</span><span class="l">${s.nameLong}</span><span class="o">${s.octave}</span></div>`;
+          }
+
+          const w = window.open('', '_blank');
+          if (!w) return alert('Não foi possível abrir a janela de stickers. Por favor, permita pop-ups para este site.');
+          w.document.write(`
+              <html>
+              <head>
+                  <title>Stickers de Notas Musicais</title>
+                  <style>
+                      body {
+                          font-family: 'Segoe UI', sans-serif;
+                          background: #ffffff;
+                          padding: 1rem;
+                      }
+                      .grid {
+                          display: grid;
+                          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                          gap: 1rem;
+                      }
+                      .s {
+                          width:15mm;
+                          height:15mm;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          justify-content: center;
+                          border-radius: 8px;
+                          padding: 0.5rem;
+                          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                      }
+                      .n {
+                          font-size: 1.5rem;
+                          font-weight: bold;
+                      }
+                      .l {
+                          font-size: 0.9rem;
+                      }
+                      .o {
+                          font-size: 0.8rem;
+                          opacity: 0.7;
+                      }
+                  </style>
+              </head>
+              <body>
+                  <h1>Stickers de Notas Musicais</h1>
+                  <div class="grid">${cells}</div>
+              </body>
+              </html>
+          `);
+      }
+
+      document.getElementById('render-btn').addEventListener('click', render);
+      document.getElementById('stickers-btn').addEventListener('click', printStickers);
+
+      document.getElementById('upload-btn').addEventListener('click', () => {
+          document.getElementById('file-input').click();
+      });
+
+      document.getElementById('file-input').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          document.getElementById('file-name').textContent = file.name;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              document.getElementById('abc-input').value = event.target.result;
+              render();
+          };
+          reader.readAsText(file);
+      });
+
+      document.getElementById('abc-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              render();
+          }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Educação Musical</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.4/dist/abcjs-basic-min.js"></script>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Educação Musical</h1>
+      <div class="input-area">
+        <textarea id="abc-input" placeholder="Digite a notação ABC aqui...">X:1
+T:Exemplo
+M:4/4
+L:1/4
+K:C
+C D E F|G A B c|c B A G|F E D C|</textarea>
+        <div class="controls">
+          <button class="btn btn-render" id="render-btn">Renderizar Partitura</button>
+          <button class="btn btn-upload" id="upload-btn">Carregar Arquivo ABC</button>
+          <button class="btn btn-stickers" id="stickers-btn">Adicionar Stickers</button>
+          <input type="file" id="file-input" accept=".abc,.md,.txt" />
+          <span class="file--name" id="file-name"></span>
+        </div>
+      </div>
+      <div id="output"></div>
+    </div>
+    <script src="src/app.js"></script>
+  </body>
+</html>

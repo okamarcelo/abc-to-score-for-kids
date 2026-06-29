@@ -1,0 +1,22 @@
+{
+  "name": "abc-to-score-for-kids",
+  "version": "1.0.0",
+  "description": "Renderizador de partituras ABC colorido para educação musical infantil",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "build": "bash build.sh",
+    "serve": "npx serve . -p 3000"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^29.0.0",
+    "@playwright/test": "^1.40.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/unit/**/*.test.js"]
+  }
+}
